@@ -25,15 +25,3 @@ class BuildingBlock:
 
         self.notes = availableNotes[(rd.randint(0,len(availableNotes) - 1))] # Randomly initialize some notes
 
-    def mutate(self): 
-        mutated = False
-        for i in range(len(self.notes)):
-            if(rd.random() < 0.05): # 5% chance to mutate
-                print("BuildingBlock before mutation")
-                print(self.notes)
-                self.notes[i] = (rd.choice(['c','d','e','f','g''a','b','c#','f#','g#','ab','bb']), 8)
-                print("After mutation")
-                print(self.notes)
-                mutated = True
-                
-        return mutated # if True. Overwrite pickle file and wav file from bb and song
