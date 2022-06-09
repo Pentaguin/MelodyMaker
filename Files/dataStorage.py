@@ -3,6 +3,7 @@ import os
 import tomita.legacy.pysynth as ps
 from pathlib import Path
 import pickle as pk
+import simpleaudio as sa
 
 class DataStorage:
     def __init__(self):
@@ -27,7 +28,6 @@ class DataStorage:
         file = open(fileName, "wb")
         pk.dump(data,file)
         file.close()
-    
 
     def createWAVfile(self,fileName, song):
         ps.make_wav (
@@ -39,3 +39,6 @@ class DataStorage:
             repeat = 1,
             fn = fileName,
         )
+
+    def playWAV(self, fileName):
+        sa.WaveObject.from_wave_file(fileName).play().wait_done()

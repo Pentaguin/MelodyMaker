@@ -26,7 +26,6 @@ End test:
 
 from dataStorage import DataStorage
 from song import Song
-import playsound as ps # Version 1.2.2 is used here. playsound version 1.3 gives error.
 import os
 from pathlib import Path
 import glob as gl
@@ -40,9 +39,10 @@ class MelodyMaker:
         self.db = DataStorage()
         self.databasePath = str(self.db.databasePath)
 
-        if(self.db.checkIfDatabaseDirectoryExist()):
+        if(self.db.checkIfDatabaseDirectoryExist()): 
             print("Database already exist. Do you want to start over again or do you want to combine old building blocks into new song.")
-            if(self.askValue("Enter 0 for combine. Enter 1 for restart. ", int) == 1):
+
+            if(self.askValue("Enter 0 for combine. Enter 1 for restart. ", int) == 1): # Remove old database.
                 self.newDatabase = True
                 self.db.removeDatabaseDirectory()
             else:
@@ -90,14 +90,14 @@ class MelodyMaker:
             self.db.createWAVfile(self.databasePath + f"\Song{songIndex}.wav", combinedSong) # Write the song to a WAV file
 
             print(f"\nNow playing song {songIndex}")
-            ps.playsound(self.databasePath + f"\Song{songIndex}.wav") # Play the wav file from the song
+            self.db.playWAV(self.databasePath + f"\Song{songIndex}.wav") # Play the wav file from the song
 
             # Write the building blocks to WAV and pickle files and play the WAV file
             print(f"\nNow playing buildingblocks from song {songIndex}")
             for buildingBlockIndex in range(len(song.buildingBlocks)):
                 self.db.createWAVfile(self.databasePath + f"\Song{songIndex}bb{buildingBlockIndex}.wav", song.buildingBlocks[buildingBlockIndex].notes)
                 self.db.createPickleFile(self.databasePath + f"\Song{songIndex}bb{buildingBlockIndex}", song.buildingBlocks[buildingBlockIndex].notes)
-                ps.playsound(self.databasePath + f"\Song{songIndex}bb{buildingBlockIndex}.wav")
+                self.db.playWAV(self.databasePath + f"\Song{songIndex}bb{buildingBlockIndex}.wav")
 
     # Choose random WAV files from building blocks
     def selectRandomWAVFiles(self): 
@@ -125,7 +125,7 @@ class MelodyMaker:
                 print("Number does not exist\n")
             else: 
                 print(f"Now listening to building block number {chosenNumber}\n")
-                ps.playsound(buildingBlockWAVFileOptions[chosenNumber - 1]) # List start with 0
+                self.db.playWAV(buildingBlockWAVFileOptions[chosenNumber - 1]) # List start with 0
 
         selectedNumbers = self.getSelectedBuildingBlockIndex(givenSize) 
         selectedOrder = self.getSortedBuildingBlockIndex(selectedNumbers)
@@ -200,7 +200,7 @@ class MelodyMaker:
         self.db.createWAVfile(self.databasePath + f"\Song{self.songAmount}.wav", newSong) # Write the song to a WAV file
         self.db.createPickleFile(self.databasePath + "\SongData", (self.songAmount + 1, self.buildingBlockAmount)) # Update the SongData file. +1 because songAmount starts with 1 instead of 0
         print("New song is complete. Now playing new song.")
-        ps.playsound(self.databasePath + f"\Song{self.songAmount}.wav") 
+        self.db.playWAV(self.databasePath + f"\Song{self.songAmount}.wav") 
         self.mutate()
 
         while(True):
