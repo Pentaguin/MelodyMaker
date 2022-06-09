@@ -27,10 +27,8 @@ End test:
 from dataStorage import DataStorage
 from song import Song
 import os
-from pathlib import Path
 import glob as gl
 import random as rd
-import time
 import itertools
 
 class MelodyMaker:
@@ -40,28 +38,31 @@ class MelodyMaker:
         self.databasePath = str(self.db.databasePath)
 
         if(self.db.checkIfDatabaseDirectoryExist()): 
-            print("Database already exist. Do you want to start over again or do you want to combine old building blocks into new song.")
+            print("\nDatabase already exist. Do you want to start over again or do you want to continue?")
 
-            if(self.askValue("Enter 0 for combine. Enter 1 for restart. ", int) == 1): # Remove old database.
-                self.newDatabase = True
-                self.db.removeDatabaseDirectory()
-            else:
-                self.newDatabase = False
+            while(True):
+                chosenValue = self.askValue("[Enter 0 for continue | Enter 1 for restart] ", int)
+
+                if(chosenValue == 1): # Remove old database.
+                    self.newDatabase = True
+                    self.db.removeDatabaseDirectory()
+                    break
+                elif(chosenValue == 0):
+                    self.newDatabase = False
+                    break
         
         if(self.newDatabase):
             self.songAmount = 0
             self.buildingBlockAmount = 0
 
             while (self.songAmount < 1 or self.buildingBlockAmount < 2):
-                self.songAmount = self.askValue("\nHow many songs? Atleast 1. ", int)
-                self.buildingBlockAmount = self.askValue("How many building blocks per song? Atleast 2.", int)
+                self.songAmount = self.askValue("\nHow many songs? [Atleast 1] ", int)
+                self.buildingBlockAmount = self.askValue("How many building blocks per song? [Atleast 2] ", int)
 
         else:
             songData = self.db.getPickleFileData(self.databasePath + "\SongData")
             self.songAmount = songData[0]
             self.buildingBlockAmount = songData[1]
-
-        
         
     def askValue(self,message, desired_type):
         while True:
@@ -76,38 +77,44 @@ class MelodyMaker:
             self.db.createPickleFile(self.databasePath + "\SongData", (self.songAmount,self.buildingBlockAmount)) # Write the data from the songs to a pickle file
             self.generateSongs()
 
-        self.selectRandomWAVFiles()
-        
+        while(True):
+            chosenValue = self.askValue("\nDo you want to combine building blocks? [Enter 0 for No | Enter 1 for Yes] ", int)
+
+            if(chosenValue == 1):
+                self.selectRandomWAVFiles()
+            elif(chosenValue == 0):
+                break
+
+    # Start by creating songs and building blocks.
     def generateSongs(self):
-        print("\n---Generate songs---\n")
+        print("\n---Generating songs---\n")
         
         for songIndex in range(self.songAmount):
-            # Create the building blocks and the song
             song = Song()
             song.createRandomBuildingBlock(self.buildingBlockAmount) 
             combinedSong = song.createSong() 
+            self.db.createWAVfile(self.databasePath + f"\Song{songIndex}.wav", combinedSong) # Write the song to a WAV file.
 
-            self.db.createWAVfile(self.databasePath + f"\Song{songIndex}.wav", combinedSong) # Write the song to a WAV file
+            print(f"Now playing song {songIndex}")
+            self.db.playWAV(self.databasePath + f"\Song{songIndex}.wav") # Play the WAV file from the song.
 
-            print(f"\nNow playing song {songIndex}")
-            self.db.playWAV(self.databasePath + f"\Song{songIndex}.wav") # Play the wav file from the song
-
-            # Write the building blocks to WAV and pickle files and play the WAV file
-            print(f"\nNow playing buildingblocks from song {songIndex}")
+            # Write the building blocks to WAV and pickle files.
             for buildingBlockIndex in range(len(song.buildingBlocks)):
                 self.db.createWAVfile(self.databasePath + f"\Song{songIndex}bb{buildingBlockIndex}.wav", song.buildingBlocks[buildingBlockIndex].notes)
                 self.db.createPickleFile(self.databasePath + f"\Song{songIndex}bb{buildingBlockIndex}", song.buildingBlocks[buildingBlockIndex].notes)
-                self.db.playWAV(self.databasePath + f"\Song{songIndex}bb{buildingBlockIndex}.wav")
+            
+        print("\nSongs and building block generation finished")
 
     # Choose random WAV files from building blocks
     def selectRandomWAVFiles(self): 
         print("\n---Combining---\n")
         
-        #  Buildingblock amount x 2 will be given as options
+        # Buildingblock amount x 2 will be given as options
         givenSize = 2 * self.buildingBlockAmount
         buildingBlockWAVFileOptions = []
 
-        for i in range(givenSize): # Randomly select the WAV files with bb (BuildingBlock) in its name.
+        # Randomly select the WAV files with bb (BuildingBlock) in its name.
+        for i in range(givenSize): 
             buildingBlockWAVFileOptions.append(rd.choice(gl.glob(self.databasePath + '\*bb*.wav')))
 
         print(f"Random building blocks are given. Choose the {self.buildingBlockAmount} building blocks from the {givenSize} given options to combine into a new song.")
@@ -116,7 +123,7 @@ class MelodyMaker:
         while(True):
             print("Enter the number from the building block you want to listen to.")
             print(f"Given building blocks are number 1 to {givenSize}.")
-            chosenNumber = self.askValue("If you want to stop listening and want to start selecting. Enter 0. ", int)
+            chosenNumber = self.askValue("If you want to stop listening and want to start selecting. [Enter 0] ", int)
 
             if(chosenNumber == 0): # Quit loop and continue selecting
                 break
@@ -138,7 +145,7 @@ class MelodyMaker:
         currentIndex = 1
 
         while(True):
-            chosenNumber = self.askValue(f"\nDo you want to select building block number {currentIndex}. [Enter 1 for Yes. Enter 0 for No] ", int)
+            chosenNumber = self.askValue(f"\nDo you want to select building block number {currentIndex}. [Enter 1 for Yes | Enter 0 for No] ", int)
                 
             if(chosenNumber == 1): # Building block selected
                 print(f"Building block number {currentIndex} selected.")
@@ -167,7 +174,7 @@ class MelodyMaker:
         
         return selectedIndexes
 
-    # Swap the building block from a song in the order you want
+    # Swap the building block from a song in the order you want.
     def getSortedBuildingBlockIndex(self, selectedIndexes): 
         orderList =  list(itertools.permutations(selectedIndexes))
         selectedOrder = []
@@ -177,7 +184,7 @@ class MelodyMaker:
 
         while (True):
             chosenNumber = self.askValue("Enter the number from the order you want. ", int)
-            if (chosenNumber > -1 and chosenNumber < len(orderList) + 1): # Number is between the given options.
+            if (chosenNumber > 0 and chosenNumber < len(orderList) + 1): # Number is between the given options.
                 selectedOrder = orderList[chosenNumber - 1]
                 break
 
@@ -189,7 +196,8 @@ class MelodyMaker:
         newSong = []
 
         print("\nNow generating the new combined song")
-        # Add the selected WAV files from all the options to the selectedWAVFiles list.
+
+        # Add the selected WAV files from all the given options to the selectedWAVFiles list.
         for buildingBlockIndex in range(len(temporaryList)):
             selectedWAVFiles.append(buildingBlockWAVFileOptions[temporaryList[buildingBlockIndex]])
             buildingBlockPickleData = self.db.getPickleFileData(selectedWAVFiles[buildingBlockIndex][:-4]) # Remove the last 4 chars, which is .wav to get the pickle file.
@@ -203,15 +211,7 @@ class MelodyMaker:
         self.db.playWAV(self.databasePath + f"\Song{self.songAmount}.wav") 
         self.mutate()
 
-        while(True):
-            self.chosenValue = self.askValue("Do you want to keep combining? Enter 0 for No. Enter yes 1 for Yes.", int)
-            if(self.chosenValue == 1 or self.chosenValue == 0):
-                break
-        
-        if(self.chosenValue == 1):
-            self.songAmount += 1 # Update the songAmount
-            self.selectRandomWAVFiles()
-
+    # Check if a building block will mutate or not.
     def mutate(self): 
         mutated = False
         randomWAVFile = rd.choice(gl.glob(self.databasePath + '\*bb*.wav')) # Randomly choose a building block WAV file to mutate
@@ -223,6 +223,7 @@ class MelodyMaker:
                     print(f"\n{randomWAVFile} is mutated")
                     print("\nBefore mutation")
                     print(pickleFileData)
+                    self.db.playWAV(randomWAVFile)
 
                 pickleFileData[i] = (rd.choice(['c','d','e','f','g''a','b','c#','f#','g#','ab','bb']), 8) 
                 mutated = True
@@ -235,6 +236,7 @@ class MelodyMaker:
             os.remove(randomWAVFile)
             self.db.createWAVfile(temporaryWAVFile, pickleFileData) 
             self.db.createPickleFile(temporaryWAVFile[:-4], pickleFileData)
+            self.db.playWAV(temporaryWAVFile)
             
 melodyMaker = MelodyMaker()
 melodyMaker.getUserPreference()
