@@ -134,13 +134,13 @@ class MelodyMaker:
                 print(f"Now listening to building block number {chosenNumber}\n")
                 self.db.playWAV(buildingBlockWAVFileOptions[chosenNumber - 1]) # List start with 0
 
-        selectedNumbers = self.getSelectedBuildingBlockIndex(givenSize) 
-        selectedOrder = self.getSortedBuildingBlockIndex(selectedNumbers)
-        self.combineBuildingBlockIntoSong(selectedOrder, buildingBlockWAVFileOptions)
+        selectedNumbers = self.getSelectedBuildingBlockNumbers(givenSize) 
+        selectedOrder = self.getSortedBuildingBlockNumbers(selectedNumbers)
+        self.combineBuildingBlocksIntoSong(selectedOrder, buildingBlockWAVFileOptions)
 
     # Select the building block index
-    def getSelectedBuildingBlockIndex(self, givenSize):
-        selectedIndexes = [] 
+    def getSelectedBuildingBlockNumbers(self, givenSize):
+        selectedNumbers = [] 
         amountOfFilesChosen = 0
         currentIndex = 1
 
@@ -150,7 +150,7 @@ class MelodyMaker:
             if(chosenNumber == 1): # Building block selected
                 print(f"Building block number {currentIndex} selected.")
                 amountOfFilesChosen += 1
-                selectedIndexes.append(currentIndex)
+                selectedNumbers.append(currentIndex)
 
                 if(amountOfFilesChosen == self.buildingBlockAmount): # File selection is done
                     print("\n---Building block selection is finished---\n")
@@ -159,7 +159,7 @@ class MelodyMaker:
                     print(f"But already reached the end of the list, but only {amountOfFilesChosen} out of the {self.buildingBlockAmount} has been selected. Start over again")
                     currentIndex = 1
                     amountOfFilesChosen = 0
-                    selectedIndexes[:] = [] 
+                    selectedNumbers[:] = [] 
                 else: 
                     currentIndex += 1
 
@@ -168,15 +168,15 @@ class MelodyMaker:
                     print(f"\nAlready reached the end of the list, but only {amountOfFilesChosen} out of the {self.buildingBlockAmount} has been selected. Start over again")
                     currentIndex = 1
                     amountOfFilesChosen = 0
-                    selectedIndexes[:] = []
+                    selectedNumbers[:] = []
                 else: 
                     currentIndex += 1
         
-        return selectedIndexes
+        return selectedNumbers
 
     # Swap the building block from a song in the order you want.
-    def getSortedBuildingBlockIndex(self, selectedIndexes): 
-        orderList =  list(itertools.permutations(selectedIndexes))
+    def getSortedBuildingBlockNumbers(self, selectedNumbers): 
+        orderList =  list(itertools.permutations(selectedNumbers))
         selectedOrder = []
 
         for index, order in enumerate(orderList):
@@ -190,7 +190,7 @@ class MelodyMaker:
 
         return selectedOrder
         
-    def combineBuildingBlockIntoSong(self, selectedOrder, buildingBlockWAVFileOptions):
+    def combineBuildingBlocksIntoSong(self, selectedOrder, buildingBlockWAVFileOptions):
         temporaryList = [x-1 for x in selectedOrder] # Every number - 1 to make the index start at 0 again.
         selectedWAVFiles = []
         newSong = []
